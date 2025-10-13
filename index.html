@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillsFuture Course Recommender</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .nav-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 1rem;
+        }
+        .nav-brand {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .nav-items {
+            display: flex;
+            gap: 1rem;
+        }
+        .nav-item {
+            color: white;
+            background: none;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s;
+        }
+        .nav-item:hover:not(.disabled) {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .nav-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .nav-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+        .page-container {
+            min-height: calc(100vh - 80px);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 2rem 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        .content-area {
+            padding: 2rem 0;
+        }
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+        .page-subtitle {
+            font-size: 1.25rem;
+            color: #718096;
+            margin-bottom: 2rem;
+        }
+        .card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .card-shadow {
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        .feature-card {
+            text-align: center;
+            padding: 2rem;
+            transition: transform 0.2s;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+        }
+        .feature-icon {
+            width: 3rem;
+            height: 3rem;
+            color: #667eea;
+            margin: 0 auto 1rem;
+        }
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+        .feature-description {
+            color: #718096;
+            margin-bottom: 2rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background-color: #edf2f7;
+            color: #4a5568;
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background-color: #e2e8f0;
+        }
+        .btn-outline {
+            background-color: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        .btn-outline:hover:not(:disabled) {
+            background-color: #667eea;
+            color: white;
+        }
+        .btn-disabled {
+            background-color: #e2e8f0;
+            color: #a0aec0;
+            cursor: not-allowed;
+        }
+        .btn-full {
+            width: 100%;
+            justify-content: center;
+        }
+        .btn-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 1rem;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .upload-area:hover {
+            border-color: #667eea;
+            background-color: #f7fafc;
+        }
+        .upload-icon {
+            width: 4rem;
+            height: 4rem;
+            color: #a0aec0;
+            margin: 0 auto 1rem;
+        }
+        .upload-text {
+            font-size: 1.25rem;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+        }
+        .upload-hint {
+            color: #718096;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-label {
+            display: block;
+            color: #2d3748;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        .form-hint {
+            color: #718096;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .alert-success {
+            background-color: #f0fff4;
+            color: #38a169;
+            border: 1px solid #9ae6b4;
+        }
+        .alert-error {
+            background-color: #fed7d7;
+            color: #c53030;
+            border: 1px solid #feb2b2;
+        }
+        .alert-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+        .loading-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .loading-text {
+            color: inherit;
+        }
+        .slide-in {
+            animation: slideIn 0.6s ease-out;
+        }
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .hover-lift:hover {
+            transform: translateY(-4px);
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+        .score-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            border-radius: 1rem;
+            margin-bottom: 2rem;
+        }
+        .score-display {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .score-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .score-item {
+            background: #f7fafc;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+        .score-item-label {
+            color: #718096;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+        .score-item-value {
+            color: #2d3748;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .course-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .course-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .course-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+        .course-provider {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .course-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .course-detail {
+            text-align: center;
+            padding: 0.5rem;
+            background: #f7fafc;
+            border-radius: 0.5rem;
+        }
+        .course-detail-label {
+            font-size: 0.75rem;
+            color: #718096;
+            margin-bottom: 0.25rem;
+        }
+        .course-detail-value {
+            font-weight: bold;
+            color: #2d3748;
+        }
+        .course-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        // API Configuration
+        const API_BASE = 'http://localhost:8000';
+        
+        // Utility function to make API calls
+        const apiCall = async (endpoint, options = {}) => {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers,
+                    },
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('API call failed:', error);
+                throw error;
+            }
+        };
+        
+        // Icon component
+        const Icon = ({ name, className = "w-6 h-6", ...props }) => {
+            const icons = {
+                Upload: () => (
+                    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                ),
+                Search: () => (
+                    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                ),
+                History: () => (
+                    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                ),
+                Home: () => (
+                    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                ),
+                BookOpen: () => (
+                    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                ),
+                TrendingUp: () => (
+                    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                ),
+                CheckCircle: () => (
+                    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                ),
+                AlertCircle: () => (
+                    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                ),
+                DollarSign: () => (
+                    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                ),
+                Clock: () => (
+                    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                ),
+                Star: () => (
+                    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                ),
+                ExternalLink: () => (
+                    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                )
+            };
+            
+            const IconComponent = icons[name];
+            return IconComponent ? <IconComponent /> : null;
+        };
+
+        // Navigation Component
+        const Navigation = ({ currentPage, onPageChange, sessionData }) => {
+            const navItems = [
+                { id: 'home', label: 'Home', icon: 'Home' },
+                { id: 'upload', label: 'Upload', icon: 'Upload' },
+                { id: 'search', label: 'Search', icon: 'Search' },
+                { id: 'history', label: 'History', icon: 'History' },
+                { id: 'saved', label: 'Saved', icon: 'BookOpen' }
+            ];
+
+            return (
+                <nav className="nav-container">
+                    <div className="nav-content">
+                        <button 
+                            className="nav-brand"
+                            onClick={() => onPageChange('home')}
+                        >
+                            SkillsFuture Course Recommender
+                        </button>
+                        
+                        <div className="nav-items">
+                            {navItems.map(item => (
+                                <button
+                                    key={item.id}
+                                    className={`nav-item ${currentPage === item.id ? 'active' : ''}`}
+                                    onClick={() => onPageChange(item.id)}
+                                >
+                                    <Icon name={item.icon} className="nav-icon" />
+                                    <span className="hidden sm:inline">{item.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </nav>
+            );
+        };
+
+        // Home Page Component
+        const HomePage = ({ onPageChange, sessionData }) => {
+            const features = [
+                {
+                    icon: 'Upload',
+                    title: 'Upload Resume',
+                    description: 'Upload your PDF resume and get detailed analysis with scoring and recommendations.',
+                    action: 'Get Started',
+                    page: 'upload'
+                },
+                {
+                    icon: 'Search',
+                    title: 'Search Courses',
+                    description: 'Find relevant SkillsFuture courses based on your career goals and industry.',
+                    action: 'Search Now',
+                    page: 'search'
+                },
+                {
+                    icon: 'History',
+                    title: 'View History',
+                    description: 'Access your previous analysis results and course recommendations.',
+                    action: 'View History',
+                    page: 'history'
+                }
+            ];
+
+            return (
+                <div className="page-container">
+                    <div className="container content-area">
+                        <div className="text-center slide-in">
+                            <h1 className="page-title">
+                                Welcome to SkillsFuture Course Recommender
+                            </h1>
+                            <p className="page-subtitle">
+                                Get personalized course recommendations based on your resume analysis and career goals. 
+                                Discover the best SkillsFuture courses to advance your career.
+                            </p>
+                        </div>
+
+                        <div className="card-grid fade-in">
+                            {features.map((feature, index) => (
+                                <div key={index} className="feature-card card-shadow hover-lift">
+                                    <Icon name={feature.icon} className="feature-icon" />
+                                    <h3 className="feature-title">{feature.title}</h3>
+                                    <p className="feature-description">{feature.description}</p>
+                                    <button
+                                        className="btn btn-primary btn-full"
+                                        onClick={() => onPageChange(feature.page)}
+                                    >
+                                        <Icon name={feature.icon} className="btn-icon" />
+                                        {feature.action}
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        {sessionData.resumeScore && (
+                            <div className="card card-shadow fade-in" style={{marginTop: '2rem'}}>
+                                <div className="text-center">
+                                    <h2 className="section-title">Recent Analysis</h2>
+                                    <p style={{color: '#718096', marginBottom: '1.5rem'}}>
+                                        Resume Score: {sessionData.resumeScore.overall_score}/100 
+                                        ({sessionData.resumeScore.grade})
+                                    </p>
+                                    <div style={{display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap'}}>
+                                        <button
+                                            className="btn btn-secondary"
+                                            onClick={() => onPageChange('analysis')}
+                                        >
+                                            <Icon name="TrendingUp" className="btn-icon" />
+                                            View Analysis
+                                        </button>
+                                        {sessionData.recommendations && (
+                                            <button
+                                                className="btn btn-primary"
+                                                onClick={() => onPageChange('recommendations')}
+                                            >
+                                                <Icon name="BookOpen" className="btn-icon" />
+                                                View Recommendations
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // Real Upload Page with API Integration
+        const UploadPage = ({ onResumeScored, onPageChange }) => {
+            const [selectedFile, setSelectedFile] = useState(null);
+            const [targetRole, setTargetRole] = useState('');
+            const [targetIndustry, setTargetIndustry] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+            const [error, setError] = useState(null);
+
+            const handleFileSelect = (event) => {
+                const file = event.target.files[0];
+                if (file && file.type === 'application/pdf') {
+                    setSelectedFile(file);
+                    setError(null);
+                } else {
+                    setError('Please select a PDF file');
+                }
+            };
+
+            const handleAnalyze = async () => {
+                console.log("Adding delay to space out requests...");
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                if (!selectedFile) return;
+
+                setIsLoading(true);
+                setError(null);
+
+                try {
+                    // Create form data for file upload
+                    console.log("Waiting to avoid rate limits...");
+                    await new Promise(resolve => setTimeout(resolve, 5000)); // 5 second delay
+                    const formData = new FormData();
+                    formData.append('file', selectedFile);
+                    if (targetRole) formData.append('target_role', targetRole);
+                    if (targetIndustry) formData.append('target_industry', targetIndustry);
+                    formData.append('experience_level', 'Mid');
+                    
+
+                    // Call resume scoring API
+                    const response = await fetch(`${API_BASE}/resume/score`, {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+
+                    const resumeScore = await response.json();
+                    
+                    // Save to session data and navigate to analysis page
+                    onResumeScored(resumeScore, targetRole, targetIndustry);
+                    onPageChange('analysis');
+
+                } catch (err) {
+                    setError(`Analysis failed: ${err.message}`);
+                    console.error('Resume analysis error:', err);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            return (
+                <div className="page-container">
+                    <div className="container content-area">
+                        <div className="text-center slide-in">
+                            <h1 className="page-title">Upload Your Resume</h1>
+                            <p className="page-subtitle">
+                                Upload your PDF resume to get detailed analysis and personalized course recommendations.
+                            </p>
+                        </div>
+
+                        <div style={{maxWidth: '32rem', margin: '0 auto'}}>
+                            <div className="card card-shadow fade-in">
+                                <div className="upload-area" onClick={() => document.getElementById('file-upload').click()}>
+                                    <Icon name="Upload" className="upload-icon" />
+                                    <div className="upload-text">
+                                        {selectedFile ? selectedFile.name : 'Click to upload your resume'}
+                                    </div>
+                                    <div className="upload-hint">
+                                        PDF files only, max 10MB
+                                    </div>
+                                    <input
+                                        id="file-upload"
+                                        type="file"
+                                        accept=".pdf"
+                                        onChange={handleFileSelect}
+                                        style={{ display: 'none' }}
+                                    />
+                                </div>
+
+                                {selectedFile && (
+                                    <div className="alert alert-success" style={{marginTop: '1rem'}}>
+                                        <Icon name="CheckCircle" className="alert-icon" />
+                                        <span>Resume uploaded successfully: {selectedFile.name}</span>
+                                    </div>
+                                )}
+
+                                {error && (
+                                    <div className="alert alert-error" style={{marginTop: '1rem'}}>
+                                        <Icon name="AlertCircle" className="alert-icon" />
+                                        <span>{error}</span>
+                                    </div>
+                                )}
+
+                                <div style={{marginTop: '1.5rem'}}>
+                                    <div className="form-group">
+                                        <label className="form-label">Target Role (Optional)</label>
+                                        <input
+                                            type="text"
+                                            className="form-input"
+                                            placeholder="e.g., Data Scientist, Product Manager"
+                                            value={targetRole}
+                                            onChange={(e) => setTargetRole(e.target.value)}
+                                        />
+                                        <div className="form-hint">
+                                            Specify your target role for more accurate analysis
+                                        </div>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label className="form-label">Target Industry (Optional)</label>
+                                        <input
+                                            type="text"
+                                            className="form-input"
+                                            placeholder="e.g., Technology, Finance, Healthcare"
+                                            value={targetIndustry}
+                                            onChange={(e) => setTargetIndustry(e.target.value)}
+                                        />
+                                        <div className="form-hint">
+                                            Specify your target industry for better recommendations
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style={{marginTop: '1.5rem'}}>
+                                    <button
+                                        className={`btn ${selectedFile && !isLoading ? 'btn-primary' : 'btn-disabled'} btn-full`}
+                                        onClick={handleAnalyze}
+                                        disabled={!selectedFile || isLoading}
+                                    >
+                                        {isLoading ? (
+                                            <div className="loading-container">
+                                                <div className="loading-spinner">
+                                                    <Icon name="TrendingUp" className="w-4 h-4" />
+                                                </div>
+                                                <span className="loading-text">Analyzing Resume...</span>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <Icon name="TrendingUp" className="btn-icon" />
+                                                Analyze Resume
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Analysis Results Page
+        const AnalysisPage = ({ sessionData, onGetRecommendations, onPageChange }) => {
+            const [careerGoal, setCareerGoal] = useState('');
+            const [currentSkills, setCurrentSkills] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+            const [error, setError] = useState(null);
+
+            if (!sessionData.currentAnalysis?.resumeScore) {
+                return (
+                    <div className="page-container">
+                        <div className="container content-area">
+                            <div className="text-center">
+                                <h1 className="page-title">No Analysis Available</h1>
+                                <p className="page-subtitle">Please upload a resume first to see the analysis.</p>
+                                <button 
+                                    className="btn btn-primary"
+                                    onClick={() => onPageChange('upload')}
+                                >
+                                    <Icon name="Upload" className="btn-icon" />
+                                    Upload Resume
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            const resumeScore = sessionData.currentAnalysis?.resumeScore;
+
+            const getScoreColor = (score) => {
+                if (score >= 85) return '#10b981'; // green
+                if (score >= 60) return '#f59e0b'; // orange 
+                return '#ef4444'; // red
+            };
+
+            const handleGetRecommendations = async () => {
+                if (!careerGoal.trim()) return;
+
+                setIsLoading(true);
+                setError(null);
+
+                try {
+                    // Create recommendation request
+                    const requestData = {
+                        resume: {
+                            Goal: careerGoal,
+                            Skills: sessionData.currentAnalysis?.extractedSkills || [], 
+                            Experience: sessionData.currentAnalysis?.targetRole || '',
+                            Industry: sessionData.currentAnalysis?.targetIndustry || ''
+                        },
+                        page_size: 8,
+                        top_k: 15,
+                        focus_on_gaps: true
+                    };
+
+                    try {
+                        console.log("Making API call with data:", requestData);
+                        
+                        const response = await apiCall('/recommend', {
+                            method: 'POST',
+                            body: JSON.stringify(requestData)
+                        });
+
+                        console.log("API response received:", response);
+                        
+                        if (!response || !response.items) {
+                            throw new Error("Invalid response structure - missing items array");
+                        }
+                        
+                        console.log("Number of recommendations:", response.items.length);
+                        
+                        onGetRecommendations(response.items, careerGoal);
+                        onPageChange('recommendations');
+
+                    } catch (err) {
+                        console.error("API call failed:", err);
+                        setError(`Failed to get recommendations: ${err.message}`);
+                    }
+
+                } catch (err) {
+                    setError(`Failed to get recommendations: ${err.message}`);
+                    console.error('Recommendation error:', err);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            return (
+                <div className="page-container">
+                    <div className="container content-area">
+                        <div className="text-center slide-in">
+                            <h1 className="page-title">Resume Analysis Results</h1>
+                            <p className="page-subtitle">
+                                Detailed analysis of your resume with actionable insights.
+                            </p>
+                        </div>
+
+                        {/* Overall Score Card */}
+                        <div className="score-card fade-in">
+                            <div className="score-display">{resumeScore.overall_score}/100</div>
+                            <div style={{fontSize: '1.25rem', opacity: 0.9}}>
+                                Overall Resume Score - Grade {resumeScore.grade}
+                            </div>
+                        </div>
+
+                        {/* Score Breakdown */}
+                        <div className="card card-shadow fade-in">
+                            <h3 className="section-title">Score Breakdown</h3>
+                            <div style={{display: 'grid', gridTemplateColumns: '1fr', gap: '1rem'}}>
+                            {Object.entries(resumeScore.breakdown).map(([key, value]) => (
+                                <div key={key} style={{marginBottom: '1rem'}}>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem'}}>
+                                        <span style={{color: '#2d3748', fontWeight: '600'}}>
+                                            {key.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                        </span>
+                                        <span style={{color: getScoreColor(value), fontWeight: 'bold'}}>
+                                            {value}/100
+                                        </span>
+                                    </div>
+                                    <div style={{width: '100%', height: '8px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden'}}>
+                                        <div 
+                                            style={{
+                                                width: `${value}%`,
+                                                height: '100%',
+                                                backgroundColor: getScoreColor(value),
+                                                transition: 'width 0.5s ease-in-out'
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        </div>
+
+                        {/* Strengths and Improvements */}
+                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem'}} className="fade-in">
+                            <div className="card card-shadow">
+                                <h3 className="section-title" style={{color: '#10b981'}}>
+                                    <Icon name="CheckCircle" style={{width: '1.5rem', height: '1.5rem', display: 'inline', marginRight: '0.5rem'}} />
+                                    Strengths
+                                </h3>
+                                <ul style={{listStyle: 'none', padding: 0}}>
+                                    {resumeScore.strengths.map((strength, index) => (
+                                        <li key={index} style={{display: 'flex', alignItems: 'flex-start', marginBottom: '0.75rem'}}>
+                                            <Icon name="CheckCircle" style={{width: '1rem', height: '1rem', color: '#10b981', marginRight: '0.5rem', marginTop: '0.125rem', flexShrink: 0}} />
+                                            <span style={{color: '#4a5568'}}>{strength}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <div className="card card-shadow">
+                                <h3 className="section-title" style={{color: '#f59e0b'}}>
+                                    <Icon name="AlertCircle" style={{width: '1.5rem', height: '1.5rem', display: 'inline', marginRight: '0.5rem'}} />
+                                    Areas for Improvement
+                                </h3>
+                                <ul style={{listStyle: 'none', padding: 0}}>
+                                    {resumeScore.improvement_areas.map((area, index) => (
+                                        <li key={index} style={{display: 'flex', alignItems: 'flex-start', marginBottom: '0.75rem'}}>
+                                            <Icon name="AlertCircle" style={{width: '1rem', height: '1rem', color: '#f59e0b', marginRight: '0.5rem', marginTop: '0.125rem', flexShrink: 0}} />
+                                            <span style={{color: '#4a5568'}}>{area}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Extracted Skills */}
+                        {sessionData.currentAnalysis?.extractedSkills && sessionData.currentAnalysis.extractedSkills.length > 0 && (
+                            <div className="card card-shadow fade-in">
+                                <h3 className="section-title">Extracted Skills</h3>
+                                <div style={{display: 'flex', flexWrap: 'wrap', gap: '0.5rem'}}>
+                                    {sessionData.currentAnalysis.extractedSkills.map((skill, index) => (
+                                        <span key={index} style={{
+                                            backgroundColor: '#e2e8f0',
+                                            color: '#4a5568',
+                                            padding: '0.25rem 0.75rem',
+                                            borderRadius: '9999px',
+                                            fontSize: '0.875rem'
+                                        }}>
+                                            {skill}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Detailed Feedback */}
+                        <div className="card card-shadow fade-in">
+                            <h3 className="section-title">Detailed Feedback</h3>
+                            <div style={{color: '#4a5568', lineHeight: '1.6'}}>
+                                {resumeScore.detailed_feedback.split('\n\n').map((section, index) => {
+                                    if (!section.trim()) return null;
+                                    
+                                    const lines = section.trim().split('\n');
+                                    const header = lines[0];
+                                    const content = lines.slice(1);
+                                    
+                                    // Check if this is a section header
+                                    if (header.match(/^(CURRENT STRENGTHS|GAPS TO ADDRESS|RECOMMENDED ACTIONS|CAREER ALIGNMENT):/)) {
+                                        const getHeaderColor = (text) => {
+                                            if (text.includes('STRENGTHS')) return '#059669';
+                                            if (text.includes('GAPS')) return '#dc2626';
+                                            if (text.includes('ACTIONS')) return '#2563eb';
+                                            if (text.includes('ALIGNMENT')) return '#7c3aed';
+                                            return '#2d3748';
+                                        };
+                                        
+                                        return (
+                                            <div key={index} style={{marginBottom: '2rem'}}>
+                                                <h4 style={{
+                                                    color: getHeaderColor(header),
+                                                    fontWeight: 'bold',
+                                                    fontSize: '1.1rem',
+                                                    marginBottom: '1rem',
+                                                    padding: '0.75rem',
+                                                    backgroundColor: '#f8fafc',
+                                                    borderLeft: `4px solid ${getHeaderColor(header)}`,
+                                                    borderRadius: '0.5rem'
+                                                }}>
+                                                    {header}
+                                                </h4>
+                                                <div style={{paddingLeft: '1rem'}}>
+                                                    {content.map((line, i) => {
+                                                        const cleanLine = line.replace(/^-\s*/, '').trim();
+                                                        if (!cleanLine) return null;
+                                                        
+                                                        return (
+                                                            <div key={i} style={{
+                                                                marginBottom: '0.75rem',
+                                                                padding: '0.75rem',
+                                                                backgroundColor: '#fafafa',
+                                                                borderRadius: '0.5rem',
+                                                                display: 'flex',
+                                                                alignItems: 'flex-start'
+                                                            }}>
+                                                                <span style={{
+                                                                    color: getHeaderColor(header),
+                                                                    marginRight: '0.75rem',
+                                                                    fontWeight: 'bold'
+                                                                }}>•</span>
+                                                                <span>{cleanLine}</span>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                    
+                                    // Handle non-header content
+                                    return (
+                                        <p key={index} style={{marginBottom: '1rem', lineHeight: '1.6'}}>
+                                            {section}
+                                        </p>
+                                    );
+                                })}
+                            </div>
+                            
+                            {resumeScore.industry_alignment && (
+                                <div style={{marginTop: '1.5rem', padding: '1rem', backgroundColor: '#eff6ff', borderRadius: '0.5rem', borderLeft: '4px solid #3b82f6'}}>
+                                    <h4 style={{color: '#1e40af', marginBottom: '0.5rem', fontWeight: 'bold'}}>Industry Alignment</h4>
+                                    <p style={{color: '#374151', margin: 0}}>{resumeScore.industry_alignment}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Career Goal Input */}
+                        <div className="card card-shadow fade-in">
+                            <h3 className="section-title">Get Course Recommendations</h3>
+                            <p style={{color: '#718096', marginBottom: '1rem'}}>
+                                Define your career goal to get personalized SkillsFuture course recommendations.
+                            </p>
+
+                            <div className="form-group">
+                                <label className="form-label">Career Goal</label>
+                                <textarea
+                                    className="form-input form-textarea"
+                                    placeholder={sessionData.currentAnalysis?.targetRole ? 
+                                        `You mentioned wanting to be a ${sessionData.currentAnalysis.targetRole}. Describe specific goals or skills you want to develop for this role...` :
+                                        "Describe your career goals, desired role, or skills you want to develop..."
+                                    }
+                                    value={careerGoal || (sessionData.currentAnalysis?.targetRole ? `I want to become a ${sessionData.currentAnalysis.targetRole}` : '')}
+                                    onChange={(e) => setCareerGoal(e.target.value)}
+                                />
+                                <div className="form-hint">
+                                    Be specific about your goals for better course recommendations
+                                </div>
+                            </div>
+
+                            {error && (
+                                <div className="alert alert-error" style={{marginBottom: '1rem'}}>
+                                    <Icon name="AlertCircle" className="alert-icon" />
+                                    <span>{error}</span>
+                                </div>
+                            )}
+
+                            <button
+                                className={`btn ${careerGoal.trim() && !isLoading ? 'btn-primary' : 'btn-disabled'} btn-full`}
+                                onClick={handleGetRecommendations}
+                                disabled={!careerGoal.trim() || isLoading}
+                            >
+                                {isLoading ? (
+                                    <div className="loading-container">
+                                        <div className="loading-spinner">
+                                            <Icon name="BookOpen" className="w-4 h-4" />
+                                        </div>
+                                        <span className="loading-text">Finding Courses...</span>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <Icon name="BookOpen" className="btn-icon" />
+                                        Get Course Recommendations
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Course Search Page with Real API
+        const SearchPage = ({ onGetRecommendations, onPageChange }) => {
+            const [careerGoal, setCareerGoal] = useState('');
+            const [industry, setIndustry] = useState('');
+            const [currentSkills, setCurrentSkills] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+            const [error, setError] = useState(null);
+
+            const handleSearch = async () => {
+                if (!careerGoal.trim()) return;
+
+                setIsLoading(true);
+                setError(null);
+
+                try {
+                    const requestData = {
+                        resume: {
+                            Goal: careerGoal,
+                            Skills: currentSkills ? currentSkills.split(',').map(s => s.trim()) : [],
+                            Industry: industry || null
+                        },
+                        page_size: 8,
+                        top_k: 15,
+                        focus_on_gaps: true
+                    };
+
+                    try {
+                        console.log("Making API call with data:", requestData);
+                        
+                        const response = await apiCall('/recommend', {
+                            method: 'POST',
+                            body: JSON.stringify(requestData)
+                        });
+
+                        console.log("API response received:", response);
+                        
+                        if (!response || !response.items) {
+                            throw new Error("Invalid response structure - missing items array");
+                        }
+                        
+                        console.log("Number of recommendations:", response.items.length);
+                        
+                        onGetRecommendations(response.items, careerGoal);
+                        onPageChange('recommendations');
+
+                    } catch (err) {
+                        console.error("API call failed:", err);
+                        setError(`Failed to get recommendations: ${err.message}`);
+                    }
+
+                } catch (err) {
+                    setError(`Search failed: ${err.message}`);
+                    console.error('Search error:', err);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            return (
+                <div className="page-container">
+                    <div className="container content-area">
+                        <div className="text-center slide-in">
+                            <h1 className="page-title">Search Courses</h1>
+                            <p className="page-subtitle">
+                                Find relevant SkillsFuture courses based on your career goals and interests.
+                            </p>
+                        </div>
+
+                        <div style={{maxWidth: '32rem', margin: '0 auto'}}>
+                            <div className="card card-shadow fade-in">
+                                <h3 className="section-title">
+                                    <Icon name="Search" style={{width: '1.5rem', height: '1.5rem', display: 'inline', marginRight: '0.5rem'}} />
+                                    Course Search
+                                </h3>
+
+                                <div className="form-group">
+                                    <label className="form-label">Career Goal *</label>
+                                    <textarea
+                                        className="form-input form-textarea"
+                                        placeholder="Describe what you want to achieve in your career..."
+                                        value={careerGoal}
+                                        onChange={(e) => setCareerGoal(e.target.value)}
+                                    />
+                                    <div className="form-hint">Required - Be specific about your goals</div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Industry (Optional)</label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="e.g., Technology, Finance, Healthcare"
+                                        value={industry}
+                                        onChange={(e) => setIndustry(e.target.value)}
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Current Skills (Optional)</label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="e.g., JavaScript, Project Management, Data Analysis"
+                                        value={currentSkills}
+                                        onChange={(e) => setCurrentSkills(e.target.value)}
+                                    />
+                                    <div className="form-hint">Comma-separated list of your current skills</div>
+                                </div>
+
+                                {error && (
+                                    <div className="alert alert-error" style={{marginBottom: '1rem'}}>
+                                        <Icon name="AlertCircle" className="alert-icon" />
+                                        <span>{error}</span>
+                                    </div>
+                                )}
+
+                                <button
+                                    className={`btn ${careerGoal.trim() && !isLoading ? 'btn-primary' : 'btn-disabled'} btn-full`}
+                                    onClick={handleSearch}
+                                    disabled={!careerGoal.trim() || isLoading}
+                                >
+                                    {isLoading ? (
+                                        <div className="loading-container">
+                                            <div className="loading-spinner">
+                                                <Icon name="Search" className="w-4 h-4" />
+                                            </div>
+                                            <span className="loading-text">Searching Courses...</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <Icon name="Search" className="btn-icon" />
+                                            Search Courses
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+
+        // Course Recommendations Page
+        const RecommendationsPage = ({ sessionData, onSaveCourse }) => {
+            if (!sessionData.recommendations || sessionData.recommendations.length === 0) {
+                return (
+                    <div className="page-container">
+                        <div className="container content-area">
+                            <div className="text-center">
+                                <h1 className="page-title">No Recommendations Available</h1>
+                                <p className="page-subtitle">Please search for courses or complete resume analysis first.</p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            
+            const CourseCard = ({ course, index }) => (
+                <div className="course-card">
+                    <div style={{display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1rem'}}>
+                        <div style={{
+                            backgroundColor: '#667eea',
+                            color: 'white',
+                            width: '2rem',
+                            height: '2rem',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 'bold',
+                            flexShrink: 0
+                        }}>
+                            {index + 1}
+                        </div>
+                        <div style={{flex: 1}}>
+                            <h3 className="course-title">{course.title || 'Course Title'}</h3>
+                            <div style={{display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
+                                <div className="course-provider">{course.provider || 'Provider information not available'}</div>
+                            </div>
+                            {course.area_of_training && (
+                                <div style={{color: '#718096', fontSize: '0.875rem'}}>{course.area_of_training}</div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="course-details">
+                        <div className="course-detail">
+                            <div className="course-detail-label">Price</div>
+                            <div className="course-detail-value">
+                                ${course.price !== null && course.price !== undefined ? course.price : 'N/A'}
+                            </div>
+                        </div>
+                        <div className="course-detail">
+                            <div className="course-detail-label">Duration</div>
+                            <div className="course-detail-value">
+                                {course.duration_hours ? `${course.duration_hours}h` : 'N/A'}
+                            </div>
+                        </div>
+                        <div className="course-detail" style={{
+                            backgroundColor: (() => {
+                                const score = course.match_score ? Math.round(course.match_score * 100) : 70;
+                                if (score >= 80) return '#dcfce7'; // light green
+                                if (score >= 60) return '#fef3c7'; // light orange  
+                                return '#fee2e2'; // light red
+                            })(),
+                            borderLeft: `4px solid ${(() => {
+                                const score = course.match_score ? Math.round(course.match_score * 100) : 70;
+                                if (score >= 80) return '#059669'; // dark green
+                                if (score >= 60) return '#f59e0b'; // dark orange  
+                                return '#dc2626'; // dark red
+                            })()}`
+                        }}>
+                            <div className="course-detail-label">Match Score</div>
+                            <div className="course-detail-value">
+                                {course.match_score ? `${Math.round(course.match_score * 100)}%` : 'High'}
+                            </div>
+                        </div>
+                    </div>
+
+                    {course.objective && (
+                        <div style={{margin: '1rem 0', padding: '1.5rem', backgroundColor: '#f7fafc', borderRadius: '0.5rem'}}>
+                            <div style={{fontSize: '0.875rem', color: '#718096', marginBottom: '0.5rem', fontWeight: '600'}}>Objective:</div>
+                            <div style={{color: '#4a5568', fontSize: '0.875rem', lineHeight: '1.5', maxHeight: 'none'}}>
+                                {course.objective}
+                            </div>
+                        </div>
+                    )}
+
+                    {course.recommendation_reason && (
+                        <div style={{margin: '1rem 0', padding: '0.75rem', backgroundColor: '#ebf8ff', borderLeft: '4px solid #3182ce', fontSize: '0.875rem', color: '#2c5282'}}>
+                            <strong>Why recommended:</strong> {course.recommendation_reason}
+                        </div>
+                    )}
+
+                    <div className="course-actions">
+                        {course.url && (
+                            <a
+                                href={course.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn btn-primary"
+                                style={{textDecoration: 'none'}}
+                            >
+                                <Icon name="ExternalLink" className="btn-icon" />
+                                View Course
+                            </a>
+                        )}
+                        <button 
+                            className="btn btn-outline"
+                            onClick={() => onSaveCourse && onSaveCourse(course)}
+                        >
+                            <Icon name="BookOpen" className="btn-icon" />
+                            Save for Later
+                        </button>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="page-container">
+                    <div className="container content-area">
+                        <div className="text-center slide-in">
+                            <h1 className="page-title">Course Recommendations</h1>
+                            <p className="page-subtitle">
+                                Recommended SkillsFuture courses for your career development.
+                            </p>
+                        </div>
+
+                        <div style={{textAlign: 'center', marginBottom: '2rem'}}>
+                            <div style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                backgroundColor: '#ebf8ff',
+                                color: '#2c5282',
+                                padding: '0.5rem 1rem',
+                                borderRadius: '9999px'
+                            }}>
+                                <Icon name="BookOpen" style={{width: '1.25rem', height: '1.25rem', marginRight: '0.5rem'}} />
+                                <span>Found {sessionData.recommendations.length} recommended courses</span>
+                            </div>
+                        </div>
+
+                        <div className="fade-in">
+                            {sessionData.recommendations.map((course, index) => (
+                                <CourseCard key={index} course={course} index={index} />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // History Page
+        const HistoryPage = ({ sessionData, onPageChange, onSelectAnalysis }) => {
+            if (!sessionData.analysisHistory || sessionData.analysisHistory.length === 0) {
+                return (
+                    <div className="page-container">
+                        <div className="container content-area">
+                            <div className="text-center">
+                                <h1 className="page-title">No History Available</h1>
+                                <p className="page-subtitle">You haven't analyzed any resumes yet.</p>
+                                <button 
+                                    className="btn btn-primary"
+                                    onClick={() => onPageChange('upload')}
+                                >
+                                    <Icon name="Upload" className="btn-icon" />
+                                    Upload Resume
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="page-container">
+                    <div className="container content-area">
+                        <div className="text-center slide-in">
+                            <h1 className="page-title">Analysis History</h1>
+                            <p className="page-subtitle">
+                                Review your previous resume analyses ({sessionData.analysisHistory.length} total)
+                            </p>
+                        </div>
+
+                        <div className="space-y-4 fade-in">
+                            {sessionData.analysisHistory.map((analysis, index) => (
+                                <div key={analysis.id} className="card card-shadow">
+                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+                                        <div>
+                                            <h3 style={{color: '#2d3748', marginBottom: '0.5rem'}}>
+                                                Analysis #{sessionData.analysisHistory.length - index}
+                                            </h3>
+                                            <div style={{display: 'flex', alignItems: 'center', marginBottom: '1rem'}}>
+                                                <div style={{
+                                                    backgroundColor: '#667eea',
+                                                    color: 'white',
+                                                    padding: '0.5rem 1rem',
+                                                    borderRadius: '0.5rem',
+                                                    marginRight: '1rem',
+                                                    fontWeight: 'bold'
+                                                }}>
+                                                    {analysis.resumeScore.grade}
+                                                </div>
+                                                <div>
+                                                    <div style={{fontWeight: 'bold'}}>{analysis.resumeScore.overall_score}/100</div>
+                                                    <div style={{fontSize: '0.875rem', color: '#718096'}}>Overall Score</div>
+                                                </div>
+                                            </div>
+                                            <div style={{fontSize: '0.875rem', color: '#718096'}}>
+                                                {new Date(analysis.timestamp).toLocaleString()}
+                                            </div>
+                                            {analysis.targetRole && (
+                                                <p style={{color: '#4a5568', marginTop: '0.5rem'}}>
+                                                    <strong>Target Role:</strong> {analysis.targetRole}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div style={{display: 'flex', gap: '0.5rem'}}>
+                                            <button
+                                                className="btn btn-secondary"
+                                                onClick={() => {
+                                                    onSelectAnalysis(analysis);
+                                                    onPageChange('analysis');
+                                                }}
+                                            >
+                                                View Details
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        const SavedCoursesPage = ({ savedCourses, onRemoveCourse }) => {
+            if (savedCourses.length === 0) {
+                return (
+                    <div className="page-container">
+                        <div className="container content-area">
+                            <div className="text-center">
+                                <h1 className="page-title">Saved Courses</h1>
+                                <p className="page-subtitle">You haven't saved any courses yet.</p>
+                                <Icon name="BookOpen" style={{width: '4rem', height: '4rem', color: '#cbd5e0', margin: '2rem auto'}} />
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="page-container">
+                    <div className="container content-area">
+                        <div className="text-center slide-in">
+                            <h1 className="page-title">Saved Courses</h1>
+                            <p className="page-subtitle">Your saved SkillsFuture courses ({savedCourses.length})</p>
+                        </div>
+
+                        <div className="fade-in">
+                            {savedCourses.map((course, index) => (
+                                <div key={course.id} className="course-card">
+                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+                                        <div style={{flex: 1}}>
+                                            <h3 className="course-title">{course.title}</h3>
+                                            <div className="course-provider">{course.provider}</div>
+                                            <div style={{color: '#718096', fontSize: '0.875rem'}}>
+                                                Saved on {new Date(course.savedAt).toLocaleDateString()}
+                                            </div>
+                                        </div>
+                                        <div style={{display: 'flex', gap: '1rem', marginTop: '1rem'}}>
+                                            {course.url && (
+                                                <a href={course.url} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+                                                    <Icon name="ExternalLink" className="btn-icon" />
+                                                    View Course
+                                                </a>
+                                            )}
+                                            <button
+                                                className="btn btn-outline"
+                                                onClick={() => onRemoveCourse(course.id)}
+                                                style={{color: '#dc2626', borderColor: '#dc2626'}}
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Main App Component with Session Management
+        const App = () => {
+            const [currentPage, setCurrentPage] = useState('home');
+            const [sessionData, setSessionData] = useState({
+                currentAnalysis: null, // Current/latest analysis
+                analysisHistory: [],   // Array of all analyses
+                recommendations: null,
+                careerGoal: null
+            });
+            const [savedCourses, setSavedCourses] = useState([]);
+
+            const handleResumeScored = (resumeScore, targetRole, targetIndustry) => {
+                const newAnalysis = {
+                    id: Date.now(), // Simple ID
+                    resumeScore,
+                    targetRole,
+                    targetIndustry,
+                    extractedSkills: resumeScore.extracted_skills || [],
+                    timestamp: new Date().toISOString(),
+                    recommendations: null
+                };
+                
+                setSessionData(prev => ({
+                    ...prev,
+                    currentAnalysis: newAnalysis,
+                    analysisHistory: [...prev.analysisHistory, newAnalysis]
+                }));
+            };
+
+            const handleGetRecommendations = (recommendations, careerGoal) => {
+                setSessionData(prev => ({
+                    ...prev,
+                    recommendations,
+                    careerGoal
+                }));
+            };
+
+            const handleSaveCourse = (course) => {
+                const courseToSave = {
+                    id: course.id,
+                    title: course.title,
+                    provider: course.provider,
+                    price: course.price,
+                    url: course.url,
+                    savedAt: new Date().toISOString()
+                };
+                
+                if (!savedCourses.find(c => c.id === course.id)) {
+                    setSavedCourses(prev => [...prev, courseToSave]);
+                }
+            };
+
+            const handleRemoveCourse = (courseId) => {
+                setSavedCourses(prev => prev.filter(c => c.id !== courseId));
+            };
+
+            const renderPage = () => {
+                switch (currentPage) {
+                    case 'upload':
+                        return <UploadPage onResumeScored={handleResumeScored} onPageChange={setCurrentPage} />;
+                    case 'analysis':
+                        return <AnalysisPage sessionData={sessionData} onGetRecommendations={handleGetRecommendations} onPageChange={setCurrentPage} />;
+                    case 'search':
+                        return <SearchPage onGetRecommendations={handleGetRecommendations} onPageChange={setCurrentPage} />;
+                    case 'recommendations':
+                        return <RecommendationsPage sessionData={sessionData} onSaveCourse={handleSaveCourse} />;
+                    case 'history':
+                        return <HistoryPage 
+                            sessionData={sessionData} 
+                            onPageChange={setCurrentPage}
+                            onSelectAnalysis={(analysis) => {
+                                setSessionData(prev => ({...prev, currentAnalysis: analysis}));
+                            }}
+                        />;
+                    case 'saved':
+                        return <SavedCoursesPage savedCourses={savedCourses} onRemoveCourse={handleRemoveCourse} />;
+                    default:
+                        return <HomePage onPageChange={setCurrentPage} sessionData={sessionData} />;
+                }
+            };
+
+            return (
+                <div>
+                    <Navigation currentPage={currentPage} onPageChange={setCurrentPage} sessionData={sessionData} />
+                    {renderPage()}
+                </div>
+            );
+        };
+
+        // Render the app
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>

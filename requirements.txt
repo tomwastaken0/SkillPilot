@@ -1,0 +1,10 @@
+fastapi 
+uvicorn 
+httpx 
+pydantic 
+python-multipart 
+PyPDF2 
+boto3 
+python-dotenv 
+pydantic-settings 
+collections-extended
