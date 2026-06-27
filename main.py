@@ -252,4 +252,6 @@ if __name__ == "__main__":
         webbrowser.open("http://localhost:8000")
 
     threading.Thread(target=open_browser, daemon=True).start()
-    uvicorn.run(app, host="127.0.0.1", port=8000, reload=False)
+    # reload=True auto-restarts the server when you edit backend code.
+    # It requires the app passed as an import string ("main:app"), not the object.
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
