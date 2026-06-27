@@ -380,7 +380,10 @@
         const { useState, useEffect } = React;
         
         // API Configuration
-        const API_BASE = 'http://localhost:8000';
+        // Empty string = call the same origin that served this page.
+        // Works locally (python main.py serves it at :8000) and when deployed.
+        // To point at a separate backend, set e.g. 'https://your-api.onrender.com'.
+        const API_BASE = '';
         
         // Utility function to make API calls
         const apiCall = async (endpoint, options = {}) => {

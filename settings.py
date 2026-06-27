@@ -14,6 +14,26 @@ class Settings(BaseSettings):
     # Environment
     ENV: str = "dev"
 
+    # ---- LLM provider (OpenAI-compatible; defaults to Groq) ----
+    # Works with any OpenAI-compatible endpoint just by changing these:
+    #   Groq:       https://api.groq.com/openai/v1      (llama-3.3-70b-versatile)
+    #   Ollama:     http://localhost:11434/v1           (qwen2.5:14b)  [LLM_API_KEY can be any string]
+    #   OpenRouter: https://openrouter.ai/api/v1        (meta-llama/llama-3.3-70b-instruct)
+    LLM_PROVIDER: str = "groq"
+    LLM_BASE_URL: str = "https://api.groq.com/openai/v1"
+    LLM_API_KEY: str = ""                       # leave blank to run in offline/mock mode
+    LLM_MODEL: str = "llama-3.3-70b-versatile"
+    LLM_TEMPERATURE: float = 0.2
+    LLM_MAX_TOKENS: int = 5000
+    LLM_TIMEOUT_SECONDS: float = 60.0
+    LLM_MAX_RETRIES: int = 5
+    LLM_RETRY_BASE_DELAY: float = 2.0           # seconds; exponential backoff base
+
+    # ---- Agent loop bounds ----
+    AGENT_MAX_STEPS: int = 6                     # LLM turns before forcing a final answer
+    AGENT_MAX_TOOL_CALLS: int = 12              # total tool invocations per request
+    AGENT_SEARCH_PAGE_SIZE: int = 8             # courses fetched per search_courses call
+
     # ---- SSG-WSG (keep these EXACTLY aligned with your .env) ----
     # Your .env has these:
     # SSG_TOKEN_URL=https://public-api.ssg-wsg.sg/dp-oauth/oauth/token

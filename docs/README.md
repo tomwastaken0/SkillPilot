@@ -22,7 +22,10 @@ An AI-powered web application that analyzes resumes and provides personalized Sk
 
 ### Backend
 - **FastAPI**: Modern Python web framework for the API
-- **AWS Bedrock**: Claude AI integration for resume analysis and course matching
+- **Provider-agnostic LLM client**: Any OpenAI-compatible API. Defaults to **Groq**
+  (free, fast, open-source models). Swap to Ollama / OpenRouter / vLLM by changing env vars.
+- **Tool-calling agent**: The recommender is a real agent loop — the LLM searches the
+  course catalog, inspects courses, refines its queries, and submits a ranked set.
 - **SSG-WSG API**: Official Singapore SkillsFuture course data
 - **PyPDF2**: PDF text extraction
 - **Pydantic**: Data validation and settings management
@@ -32,17 +35,28 @@ An AI-powered web application that analyzes resumes and provides personalized Sk
 - **Tailwind CSS**: Utility-first styling
 - **Vanilla JavaScript**: No build process required
 
-### Infrastructure
-- **AWS Services**: Bedrock for AI capabilities
-- **OAuth2**: Secure API authentication
-- **Environment-based Configuration**: Flexible deployment settings
+### Code layout
+```
+main.py        # thin FastAPI routes
+settings.py    # all config (LLM, agent, SSG, scoring weights)
+app/
+  llm.py       # provider-agnostic OpenAI-compatible client (+ offline mock mode)
+  agent.py     # tool-calling recommendation loop (+ deterministic fallback)
+  tools.py     # the agent's tools: search_courses, get_course_details, submit_recommendations
+  ssg.py       # SSG-WSG course directory client
+  scoring.py   # deterministic course scoring (uses settings weights)
+  resume.py    # PDF extraction + resume analysis/helper
+  prompts.py   # prompt templates
+  schemas.py   # pydantic request/response models
+```
 
 ## Installation
 
 ### Prerequisites
-- Python 3.8+
-- AWS Account with Bedrock access
-- SSG-WSG API credentials
+- Python 3.9+
+- A free **Groq API key** (https://console.groq.com/keys) — or any OpenAI-compatible
+  endpoint (Ollama, OpenRouter, etc.). The app also boots in offline **mock mode** with no key.
+- SSG-WSG API credentials (for live course data)
 
 ### Setup Steps
 
@@ -61,15 +75,15 @@ An AI-powered web application that analyzes resumes and provides personalized Sk
    ```
 
 3. **Configure environment variables**
-   Create a `.env` file with the following:
+   Copy `.env.example` to `.env` and fill it in. The key settings:
    ```env
-   # Environment
    ENV=dev
 
-   # AWS Credentials (for Claude AI)
-   AWS_ACCESS_KEY_ID=your_aws_access_key
-   AWS_SECRET_ACCESS_KEY=your_aws_secret_key
-   AWS_SESSION_TOKEN=your_session_token
+   # LLM provider (OpenAI-compatible). Default = Groq.
+   LLM_PROVIDER=groq
+   LLM_BASE_URL=https://api.groq.com/openai/v1
+   LLM_API_KEY=your_groq_api_key        # leave blank for offline mock mode
+   LLM_MODEL=llama-3.3-70b-versatile
 
    # SSG-WSG API Configuration
    SSG_TOKEN_URL=https://public-api.ssg-wsg.sg/dp-oauth/oauth/token
@@ -78,26 +92,23 @@ An AI-powered web application that analyzes resumes and provides personalized Sk
    SSG_API_BASE=https://public-api.ssg-wsg.sg
    SSG_API_VERSION=v2.2
 
-   # Scoring Configuration
+   # Scoring weights (optional — sensible defaults live in settings.py)
    WEIGHT_SIMILARITY=0.6
    WEIGHT_PRICE=0.15
    WEIGHT_DURATION=0.15
-   WEIGHT_RATING=0.10
-
-  # New skill gap analysis weights and thresholds
-  SKILL_GAP_BONUS=0.3
-  AREA_MATCH_BONUS=0.2
-  EXISTING_SKILL_OVERLAP_THRESHOLD=0.5
-  EXISTING_SKILL_PENALTY=0.2
-
-  # Career transition focus - heavily prioritize target career goals
-  CAREER_GOAL_BONUS=0.5
-
-  # Content analysis weights (for better course content matching)
-  OBJECTIVE_WEIGHT=1.2
-  CONTENT_WEIGHT=1.0
-  TAG_WEIGHT=0.8
+   SKILL_GAP_BONUS=0.3
+   AREA_MATCH_BONUS=0.2
+   EXISTING_SKILL_OVERLAP_THRESHOLD=0.5
+   EXISTING_SKILL_PENALTY=0.2
    ```
+
+   **Using a different model provider** — just change three values:
+
+   | Provider   | `LLM_BASE_URL`                   | `LLM_MODEL` example                    |
+   |------------|----------------------------------|----------------------------------------|
+   | Groq       | `https://api.groq.com/openai/v1` | `llama-3.3-70b-versatile`              |
+   | Ollama     | `http://localhost:11434/v1`      | `qwen2.5:14b` (set `LLM_API_KEY=ollama`)|
+   | OpenRouter | `https://openrouter.ai/api/v1`   | `meta-llama/llama-3.3-70b-instruct`    |
 
 4. **Start the application**
    ```bash
@@ -188,29 +199,38 @@ Get detailed information about a specific course.
 ## Architecture
 
 ### AI Integration
-The application uses AWS Bedrock with Claude for:
-- Resume content analysis and scoring
-- Career transition detection
-- Intelligent search term generation
-- Course relevance assessment
-- Personalized recommendation explanations
+A single provider-agnostic client (`app/llm.py`, OpenAI-compatible) powers:
+- Resume content analysis and scoring (`app/resume.py`)
+- Resume improvement suggestions
+- The recommendation **agent** (`app/agent.py`), which drives tool calls
+
+If no `LLM_API_KEY` is set, the client runs in **offline mock mode** so the app still boots.
+
+### The recommendation agent
+`/recommend` runs a genuine tool-calling loop instead of a single prompt:
+1. The LLM is given the user's skills, goal, and skill gaps.
+2. It calls `search_courses` with focused keyword queries (often several, from different angles).
+3. It inspects promising courses with `get_course_details` and **refines its queries** if results are weak.
+4. When it has strong candidates, it calls `submit_recommendations` with ranked course references.
+5. The backend scores the chosen courses deterministically (`app/scoring.py`) and returns them.
+
+The loop is bounded by `AGENT_MAX_STEPS` / `AGENT_MAX_TOOL_CALLS`, and falls back to a
+deterministic search+score pipeline if the LLM is unavailable or the loop stalls — so the
+endpoint never fails.
 
 ### Scoring Algorithm
-The recommendation system uses a multi-factor scoring approach:
-
-1. **Content Similarity** (40%): Matches course content with career goals
-2. **Skill Gap Coverage** (20%): Prioritizes courses filling identified gaps
-3. **Price Factor** (10%): Considers course cost
-4. **Duration Factor** (10%): Balances time investment
-5. **Relevance Bonus** (10%): AI-assessed career alignment
-6. **Career Transition Bonus** (10%): Extra weight for career changers
+Final ranking is deterministic and reads every weight from `settings.py`:
+- **Content similarity** (`WEIGHT_SIMILARITY`): title/objective/content vs. the goal
+- **Skill-gap bonus** (`SKILL_GAP_BONUS`): rewards courses that fill stated gaps
+- **Price / duration** (`WEIGHT_PRICE`, `WEIGHT_DURATION`): cost and time factors
+- **Industry match** (`AREA_MATCH_BONUS`) and an **existing-skill penalty** (`EXISTING_SKILL_PENALTY`)
+  to avoid recommending things the user already knows
 
 ### Data Flow
 1. User uploads resume → PDF text extraction
-2. AI analyzes content → Generates scores and feedback
-3. User defines career goals → AI generates search terms
-4. System queries SSG API → Retrieves course data
-5. AI scores and ranks courses → Returns recommendations
+2. LLM analyzes content → scores and feedback
+3. User defines a career goal → the agent searches, refines, and selects courses
+4. Backend scores/ranks the selected courses → returns recommendations
 
 ## Configuration
 
@@ -227,7 +247,7 @@ EXISTING_SKILL_PENALTY = 0.2    # Penalty for redundant courses
 ### API Limits
 - Resume file size: 10MB maximum
 - PDF format only
-- Rate limiting: Built-in retry logic for AWS Bedrock
+- Rate limiting: Built-in async retry/backoff for the LLM API
 
 ## Deployment
 
@@ -275,10 +295,10 @@ The system automatically detects major career changes and:
 
 ### Common Issues
 
-**AWS Bedrock Connection**
-- Verify AWS credentials are valid
-- Ensure region is set to `us-east-1`
-- Check Bedrock service access permissions
+**LLM Connection**
+- Verify `LLM_API_KEY` is set (or expect offline mock responses)
+- Confirm `LLM_BASE_URL` and `LLM_MODEL` match your provider (see the provider table above)
+- For Ollama, make sure the model is pulled (`ollama pull qwen2.5:14b`) and the server is running
 
 **SSG API Authentication**
 - Confirm client ID and secret are correct
